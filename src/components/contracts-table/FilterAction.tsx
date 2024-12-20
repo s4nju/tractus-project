@@ -19,7 +19,7 @@ const FilterAction = ({
 }: {
   selectedStatuses: string[];
   allStatuses: Status[];
-  toggleStatus: (status: string) => void;
+  toggleStatus: (status: Status) => void;
   setSelectedStatuses: (statuses: Status[]) => void;
 }) => {
   return (

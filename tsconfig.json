@@ -31,7 +31,7 @@
     "isolatedModules": true,
     "incremental": true,
     // Load types
-    "types": ["vitest/globals"],
+    "types": ["vite/client",],
     // Path aliases
     "baseUrl": ".",
     "paths": {

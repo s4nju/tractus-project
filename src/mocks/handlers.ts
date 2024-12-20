@@ -23,6 +23,45 @@ export const handlers = [
 
       if (data === ACTIONS.GET_CONTRACTS) {
         client.send(JSON.stringify({ type: data, data: contractList }));
+
+        setInterval(
+          () => {
+            const randonChoice = Math.round(Math.random() * 10);
+            const randomContract = contractList[randonChoice];
+
+            const sendItem = {
+              type: ACTIONS.UPDATE_STATUS,
+              data: {
+                id: randomContract?.id,
+                data: ["active", "inactive", "pending"][
+                  Math.floor(Math.max(0, Math.random() * 3))
+                ],
+              },
+            };
+
+            client.send(JSON.stringify(sendItem));
+          },
+          Number(import.meta.env.VITE_STATUS_UPDATE_DELAY)
+        );
+
+        setInterval(
+          () => {
+            const randonChoice = Math.round(Math.random() * 10);
+            const randomContract = contractList[randonChoice];
+
+            const sendItem = {
+              type: ACTIONS.UPDATE_CLIENT_NAME,
+              data: {
+                id: randomContract?.id,
+                data: faker.person.fullName(),
+              },
+            };
+
+            client.send(JSON.stringify(sendItem));
+          },
+          Number(import.meta.env.VITE_NAME_UPDATE_DELAY)
+        );
+        return;
       }
 
       let parsedData: any;
@@ -71,38 +110,6 @@ export const handlers = [
           JSON.stringify({ type: ACTIONS.DELETE_CONTRACT, data: contractList })
         );
       }
-
-      setInterval(() => {
-        const randonChoice = Math.round(Math.random() * 10);
-        const randomContract = contractList[randonChoice];
-
-        const sendItem = {
-          type: ACTIONS.UPDATE_STATUS,
-          data: {
-            id: randomContract?.id,
-            data: ["active", "inactive", "pending"][
-              Math.floor(Math.max(0, Math.random() * 3))
-            ],
-          },
-        };
-
-        client.send(JSON.stringify(sendItem));
-      }, 10000);
-
-      setInterval(() => {
-        const randonChoice = Math.round(Math.random() * 10);
-        const randomContract = contractList[randonChoice];
-
-        const sendItem = {
-          type: ACTIONS.UPDATE_CLIENT_NAME,
-          data: {
-            id: randomContract?.id,
-            data: faker.person.fullName(),
-          },
-        };
-
-        client.send(JSON.stringify(sendItem));
-      }, 8000);
     });
   }),
 ];
