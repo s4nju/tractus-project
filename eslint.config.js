@@ -18,6 +18,11 @@ export default tseslint.config(
         "warn",
         { allowConstantExport: true },
       ],
+      env: {
+        node: true,
+        browser: true,
+        es6: true,
+      },
     },
-  },
+  }
 );

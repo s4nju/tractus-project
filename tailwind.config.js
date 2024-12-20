@@ -1,7 +1,10 @@
+import formsPlugin from "@tailwindcss/forms";
+import animatePlugin from "tailwindcss-animate";
+
 export default {
   darkMode: ["class"],
   content: ["./src/**/*.tsx", "./src/**/*.css"],
-  plugins: [import("@tailwindcss/forms"), import("tailwindcss-animate")],
+  plugins: [formsPlugin, animatePlugin],
   theme: {
     extend: {
       borderRadius: {
