@@ -1,3 +1,4 @@
+import { ACTIONS } from "@/constants";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
@@ -23,7 +24,7 @@ export const useStore = create<Store>()(
         data: ContractType["clientName"] | ContractType["status"];
       }
     ) => {
-      if (updateType === "update/status") {
+      if (updateType === ACTIONS.UPDATE_STATUS) {
         set((state) => {
           const idx = state.contracts.findIndex(
             (contract) => contract.id === payload.id
@@ -38,7 +39,7 @@ export const useStore = create<Store>()(
               payload.data as ContractType["status"];
           }
         });
-      } else if (updateType === "update/clientName") {
+      } else if (updateType === ACTIONS.UPDATE_CLIENT_NAME) {
         set((state) => {
           const idx = state.contracts.findIndex(
             (contract) => contract.id === payload.id
@@ -62,4 +63,6 @@ export type ContractType = {
   clientName: string;
 };
 
-export type UpdateContractsType = "update/status" | "update/clientName";
+export type UpdateContractsType =
+  | typeof ACTIONS.UPDATE_STATUS
+  | typeof ACTIONS.UPDATE_CLIENT_NAME;

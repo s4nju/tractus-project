@@ -1,4 +1,5 @@
-import { type ContractType } from "../../store/store";
+import { useState } from "react";
+import { ArrowUpDown, Plus, Search } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -9,28 +10,36 @@ import {
 } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import {
-  ArrowUpDown,
-  Download,
-  Edit,
-  Eye,
-  MoreVertical,
-  Search,
-  Trash2,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+import { type ContractType } from "../../store/store";
 import { Input } from "../ui/input";
-import { useState } from "react";
+import TableActions from "./TableActions";
+import FilterAction from "./FilterAction";
+import DeleteConfirmation from "./DeleteConfirmation";
+import AddEditContactModal from "./AddEditContactModal";
+import { ACTIONS } from "@/constants";
 
-const TableComponent = ({ contracts }: { contracts: ContractType[] }) => {
+export type Status = "active" | "inactive" | "pending";
+
+const allStatuses: Status[] = ["active", "inactive", "pending"];
+
+const TableComponent = ({
+  contracts,
+  sendMessage,
+}: {
+  contracts: ContractType[];
+  sendMessage: (message: string) => void;
+}) => {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"clientName" | "status" | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedContractId, setSelectedContractId] = useState<string | null>(
+    null
+  );
+  const [selectedStatuses, setSelectedStatuses] =
+    useState<Status[]>(allStatuses);
 
   const handleSort = (column: "clientName" | "status") => {
     if (sortBy === column) {
@@ -44,8 +53,9 @@ const TableComponent = ({ contracts }: { contracts: ContractType[] }) => {
   const filteredAndSortedContracts = contracts
     .filter(
       (contract) =>
-        contract.clientName.toLowerCase().includes(search.toLowerCase()) ||
-        contract.id.toLowerCase().includes(search.toLowerCase())
+        (contract.clientName.toLowerCase().includes(search.toLowerCase()) ||
+          contract.id.toLowerCase().includes(search.toLowerCase())) &&
+        selectedStatuses.includes(contract.status)
     )
     .sort((a, b) => {
       if (!sortBy) return 0;
@@ -60,11 +70,39 @@ const TableComponent = ({ contracts }: { contracts: ContractType[] }) => {
       }
     });
 
+  const handleDeleteConfirmation = () => {
+    sendMessage(
+      JSON.stringify({
+        type: ACTIONS.DELETE_CONTRACT,
+        data: { id: selectedContractId },
+      })
+    );
+    setShowDeleteDialog(false);
+  };
+
+  const handleDelete = (id: string) => {
+    setSelectedContractId(id);
+    setShowDeleteDialog(true);
+  };
+
+  const handleEdit = (id: string) => {
+    setSelectedContractId(id);
+    setShowEditModal(true);
+  };
+
+  const toggleStatus = (status: Status) => {
+    setSelectedStatuses((current) =>
+      current.includes(status)
+        ? current.filter((s) => s !== status)
+        : [...current, status]
+    );
+  };
+
   return (
-    <div className="w-full space-y-4 rounded-lg border bg-card p-6 dark">
+    <div className="w-full space-y-4 rounded-lg border bg-card p-6">
       <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold tracking-tight text-white">
+        <div className="space-y-1 mr-auto">
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
             Contracts
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -72,10 +110,26 @@ const TableComponent = ({ contracts }: { contracts: ContractType[] }) => {
             <span className="text-emerald-400 font-medium">Open</span>
           </p>
         </div>
+        <div className="mr-2">
+          <Button
+            className="mr-2"
+            variant="outline"
+            onClick={() => setShowAddModal(true)}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Generate New Contract
+          </Button>
+          <FilterAction
+            selectedStatuses={selectedStatuses}
+            allStatuses={allStatuses}
+            toggleStatus={toggleStatus}
+            setSelectedStatuses={setSelectedStatuses}
+          />
+        </div>
         <div className="relative w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search contracts..."
+            placeholder="Enter id or name..."
             className="pl-8"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -86,14 +140,14 @@ const TableComponent = ({ contracts }: { contracts: ContractType[] }) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[300px] text-white">
+              <TableHead className="w-[300px] text-foreground">
                 Contract ID
               </TableHead>
               <TableHead>
                 <Button
                   variant="ghost"
                   onClick={() => handleSort("clientName")}
-                  className="text-white hover:text-white"
+                  className="text-foreground hover:text-foreground"
                 >
                   Client Name
                   <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -103,7 +157,7 @@ const TableComponent = ({ contracts }: { contracts: ContractType[] }) => {
                 <Button
                   variant="ghost"
                   onClick={() => handleSort("status")}
-                  className="text-white hover:text-white"
+                  className="text-foreground hover:text-foreground"
                 >
                   Status
                   <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -116,10 +170,10 @@ const TableComponent = ({ contracts }: { contracts: ContractType[] }) => {
             {filteredAndSortedContracts.length > 0 ? (
               filteredAndSortedContracts.map((contract) => (
                 <TableRow key={contract.id}>
-                  <TableCell className="font-mono text-xs text-white">
+                  <TableCell className="font-mono text-xs text-foreground">
                     {contract.id}
                   </TableCell>
-                  <TableCell className="font-medium text-white">
+                  <TableCell className="font-medium text-foreground">
                     {contract.clientName}
                   </TableCell>
                   <TableCell>
@@ -137,42 +191,16 @@ const TableComponent = ({ contracts }: { contracts: ContractType[] }) => {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-white hover:text-white"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Download className="mr-2 h-4 w-4" />
-                          Download
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <TableActions
+                      onClickDelete={() => handleDelete(contract.id)}
+                      onClickEdit={() => handleEdit(contract.id)}
+                    />
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-white">
+                <TableCell colSpan={4} className="text-center text-foreground">
                   No contracts found
                 </TableCell>
               </TableRow>
@@ -180,6 +208,29 @@ const TableComponent = ({ contracts }: { contracts: ContractType[] }) => {
           </TableBody>
         </Table>
       </div>
+      <DeleteConfirmation
+        showDeleteDialog={showDeleteDialog}
+        setShowDeleteDialog={setShowDeleteDialog}
+        onDelete={handleDeleteConfirmation}
+      />
+      {showAddModal || (showEditModal && selectedContractId) ? (
+        <AddEditContactModal
+          sendMessage={sendMessage}
+          formData={
+            selectedContractId
+              ? contracts.find((c) => c.id === selectedContractId)
+              : undefined
+          }
+          modalMode={showEditModal ? "edit" : "add"}
+          showAddModal={showAddModal || showEditModal}
+          allStatuses={allStatuses}
+          setShowAddModal={setShowAddModal}
+          setShowEditModal={setShowEditModal}
+          setSelectedContractId={setSelectedContractId}
+        />
+      ) : (
+        <></>
+      )}
     </div>
   );
 };
